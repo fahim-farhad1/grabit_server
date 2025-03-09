@@ -45,10 +45,21 @@ async function run() {
     //get single products with query by id
     app.get("/product", async (req, res) => {
       const id = req.query._id;
-      console.log("queryId:--", id);
-      const query = { _id: new ObjectId(id) };
-      const result = await productsCollections.findOne(query);
-      res.send(result);
+
+      // Validate the ID
+      if (!id || !ObjectId.isValid(id)) {
+        console.log(id, "id");
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+
+      try {
+        const query = { _id: new ObjectId(id) };
+        const result = await productsCollections.findOne(query);
+        res.send(result);
+      } catch (error) {
+        console.error("Database error:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
     });
 
     //get single products
@@ -108,6 +119,14 @@ async function run() {
       console.log("queryEmail:--", email);
       const query = { userEmail: email };
       const result = await cartsCollections.findOne(query);
+      res.send(result);
+    });
+    // update cart data
+    app.patch("/cart", async (req, res) => {
+      const { userEmail, productId } = req.body;
+      const query = { userEmail: userEmail };
+      const update = { $pull: { productId: productId } };
+      const result = await cartsCollections.updateOne(query, update);
       res.send(result);
     });
 

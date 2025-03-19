@@ -5,7 +5,13 @@ require("dotenv").config();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: "*", 
+  methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS",
+  allowedHeaders: "Authorization, Content-Type"
+
+}));
+
 app.use(express.json());
 
 const username = process.env.DB_USER;
@@ -24,7 +30,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     //collections
     const productsCollections = client.db("Grabit").collection("products");
@@ -34,7 +40,7 @@ async function run() {
     const cartsCollections = client.db("Grabit").collection("Carts");
     const wishlistCollections = client.db("Grabit").collection("Wishlist");
 
-    // products
+   
 
     // get all products
     app.get("/products", async (req, res) => {
@@ -70,12 +76,21 @@ async function run() {
       const result = await productsCollections.findOne(query);
       res.send(result);
     });
+    //get  products by category
+    app.get("/products/:category/", async (req, res) => {
+      const categories = req.params.category;
+      const query = { category: categories };
+      const result = await productsCollections.find(query).toArray();
+      res.send(result);
+    });
 
     // get all category
     app.get("/categories", async (req, res) => {
       const result = await categoriesCollections.find().toArray();
       res.send(result);
     });
+
+    
 
     //get seasonal single products
     app.get("/seasonal/:category/:slug/:id", async (req, res) => {
@@ -207,10 +222,10 @@ async function run() {
       res.send(result);
     });
 
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } catch (error) {
     console.error(error);
   } finally {
